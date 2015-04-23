@@ -1,12 +1,22 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import re
+import LocalFilesUtil
+import os.path
 
-BASE_API_URL = 'http://192.168.2.106:8089/gui/'
+# BASE_API_URL = 'http://192.168.2.106:8089/gui/'
+BASE_API_URL = 'http://192.168.2.112:8089/gui/'
 API_TOKEN = 'token.html'
 API_LIST_FILES = '?list=1'
+API_GET_SETTINGS = '?action=getsettings'
+API_GET_FILES = '?action=getfiles&hash='
+API_STOP_TORRENT = '?action=stop&hash='
+API_REMOVE_TORRENT = '?action=remove&hash='
+
+DOWNLOAD_PATH = 'C:/Users/Asaf/Downloads'
 
 STATUS_STRINGS = ['Started', 'Checking', 'Start after check', 'Checked', 'Error', 'Paused', 'Queued', 'Loaded']
+FILE_PRIORITY_STRINGS = ['Don''t Download', 'Low Priority', 'Normal Priority', 'High Priority']
 
 auth = HTTPBasicAuth('admin', 'admin')
 
@@ -65,6 +75,15 @@ def get_all_torrents():
     pass
 
 
+def filter_finished(torrents):
+    finished = []
+    for tor in torrents:
+        if tor['percent_progress'] == 100:
+            finished.append(tor)
+    return finished
+
+
+
 def get_status_from_code(status_code):
     statuses = []
     for i in range(0, 8):
@@ -72,5 +91,84 @@ def get_status_from_code(status_code):
             statuses.append(STATUS_STRINGS[i])
     return statuses
 
-# 	REMAINING (integer in bytes)	]
+
+def get_utorrent_settings():
+    r = requests.get(BASE_API_URL + API_GET_SETTINGS, auth=auth)
+    if r.status_code == 200:
+        return r.text
+    pass
+
+
+def stop_torrent(torrent_hash):
+    r = requests.get(BASE_API_URL + API_STOP_TORRENT + torrent_hash, auth=auth)
+    print r.text
+    if r.status_code != 200:
+        return False
+    return True
+
+
+def remove_torrent(torrent_hash):
+    r = requests.get(BASE_API_URL + API_REMOVE_TORRENT + torrent_hash, auth=auth)
+    print r.text
+    if r.status_code != 200:
+        return False
+    return True
+
+
+def get_torrent_files(torrent_hash):
+    r = requests.get(BASE_API_URL + API_GET_FILES + torrent_hash, auth=auth)
+    if r.status_code != 200:
+        return None
+    j = r.json()
+    if not j:
+        return None
+    files = []
+    for file_data in j['files'][1]:
+        data = {'file_name': file_data[0],
+                'file_size_in_bytes': file_data[1],
+                'downloaded_in_bytes': file_data[2],
+                'priority': file_data[3],
+                'priority_string': FILE_PRIORITY_STRINGS[int(file_data[3])],
+                'first_piece': file_data[4],
+                'num_pieces': file_data[5]
+                }
+        # print part
+        files.append(data)
+    return files
+
+
+def get_data_for_video_files(files_in_torrent, torrent_name):
+    if not files_in_torrent:
+        return None
+    files_data = []
+    for f in files_in_torrent:
+        if not LocalFilesUtil.check_if_file_is_video(f['file_name']):
+            continue
+        # check if series and get season
+        season, episode = LocalFilesUtil.get_season_and_episode_from_filename(f['file_name'])
+        if not season:
+            # for now, don't handle movies
+            print('{} is not series file'.format(f['file_name']))
+            return None
+        # get series name
+        series_name = LocalFilesUtil.get_series_name_from_filename(f['file_name'])
+        if not series_name:
+            print('{} is a bad file name'.format(f['file_name']))
+            return None
+        # get full file path
+        full_path = os.path.join(DOWNLOAD_PATH, torrent_name)
+        if os.path.isdir(full_path):
+            full_path = os.path.join(full_path, f['file_name'])
+        files_data.append({
+            'season': season,
+            'episode': episode,
+            'file_name': f['file_name'],
+            'series_name': series_name,
+            'full_file_path': full_path
+        })
+    return files_data
+
+
+def get_series_data_from_file_name():
+    pass
 
