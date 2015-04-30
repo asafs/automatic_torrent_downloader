@@ -3,14 +3,16 @@ from requests.auth import HTTPBasicAuth
 import re
 import LocalFilesUtil
 import os.path
+import webbrowser
 
 # BASE_API_URL = 'http://192.168.2.106:8089/gui/'
-BASE_API_URL = 'http://192.168.2.112:8089/gui/'
+BASE_API_URL = 'http://localhost:8089/gui/'
 API_TOKEN = 'token.html'
 API_LIST_FILES = '?list=1'
 API_GET_SETTINGS = '?action=getsettings'
 API_GET_FILES = '?action=getfiles&hash='
 API_STOP_TORRENT = '?action=stop&hash='
+API_ADD_TORRENT = '?action=add-url&s='
 API_REMOVE_TORRENT = '?action=remove&hash='
 
 DOWNLOAD_PATH = 'C:/Users/Asaf/Downloads'
@@ -81,7 +83,6 @@ def filter_finished(torrents):
         if tor['percent_progress'] == 100:
             finished.append(tor)
     return finished
-
 
 
 def get_status_from_code(status_code):
@@ -169,6 +170,16 @@ def get_data_for_video_files(files_in_torrent, torrent_name):
     return files_data
 
 
+def download_magnet_link(magnet_link):
+    webbrowser.open_new(magnet_link)
+
+
+def download_file(file_link):
+    r = requests.get(BASE_API_URL + API_ADD_TORRENT + file_link, auth=auth)
+    if r.status_code != 200:
+        return False
+    return True
+
+
 def get_series_data_from_file_name():
     pass
-

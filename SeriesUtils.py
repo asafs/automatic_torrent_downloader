@@ -3,7 +3,7 @@ from APIsConstants import *
 import requests
 import os.path
 import json
-import webbrowser
+import utorrentUtils
 
 
 def get_series_list():
@@ -76,28 +76,27 @@ def get_episode_download_link(episode, res=None):
             return {'res': v, 'magnet_link': torrents[v]}
 
 
-def download_magnet_link(link):
-    webbrowser.open_new(link)
-
-
-def check_links_for_series(series, res=None, to_download=False):
-    print 'checking series: {}'.format(series['name'])
+def get_links_for_series(series, res=None, to_download=False):
+    if not res:
+        res = series['res']
+    # print 'checking series: {}'.format(series['name'])
     episodes = get_episodes_not_downloaded(series)
-    print 'got {} new episodes'.format(len(episodes))
+    # print 'got {} new episodes'.format(len(episodes))
+    links = []
     for epi in episodes:
         link = get_episode_download_link(epi, res)
         if link:
-            print 'Got link for episode season {0} episode {1} in resolution {2}'.\
-                format(epi['season'], epi['episode'], link['res'])
-            if to_download:
-                print 'starting to download...'
-                print link
-                download_magnet_link(link['magnet_link']['url'])
-        else:
-            print 'No link for episode season {0} episode {1} in res {2}'.format(epi['season'], epi['episode'], res)
+            epi['link'] = link
+            links.append(epi)
+            # print 'Got link for episode season {0} episode {1} in resolution {2}'.\
+            #     format(epi['season'], epi['episode'], link['res'])
+        # else:
+        #     print 'No link for episode season {0} episode {1} in res {2}'.format(epi['season'], epi['episode'], res)
+    return links
 
 
 def get_series_to_download():
     if os.path.isfile(SEIRES_TO_DOWNLOAD_FILE_NAME):
         with open(SEIRES_TO_DOWNLOAD_FILE_NAME, 'r') as f:
             return json.loads(f.read())
+

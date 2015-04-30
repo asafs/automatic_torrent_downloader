@@ -58,3 +58,10 @@ target/
 
 # idea
 .idea
+
+# video and subtitle files
+*.mp4
+*.srt
+
+# subtitle dbm
+cachefile.dbm

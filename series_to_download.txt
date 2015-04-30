@@ -1,1 +1,1 @@
-[{"last_episode": {"season": 5, "episode": 1}, "name": "game of thrones"}, {"last_episode": {"season": 8, "episode": 16}, "name": "the big bang theory"}, {"last_episode": {"season": 1, "episode": 4}, "name": "Silicon Valley"}]
+[{"res": "720p", "last_episode": {"season": 5, "episode": 2}, "name": "game of thrones"}, {"res": "480p", "last_episode": {"season": 8, "episode": 19}, "name": "the big bang theory"}, {"res": "480p", "last_episode": {"season": 1, "episode": 8}, "name": "Silicon Valley"}]
